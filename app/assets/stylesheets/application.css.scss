@@ -16,6 +16,8 @@
 
 @import 'bootstrap-sprockets';
 @import 'bootstrap';
+@import 'font-awesome-sprockets';
+@import 'font-awesome';
 
 // Typography Styles
 h1, h2, h3 {
@@ -44,7 +46,8 @@ h1, h2, h3 {
    }
 }
  
-//Homepage Styles 
+//Homepage Styles
+
   .home-callout {
     color:white;
     margin-top: -20px;
