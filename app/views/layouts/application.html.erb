@@ -22,7 +22,7 @@
           </button>
           <%= link_to root_path, class: "navbar-brand" do %>
            <i class="fa fa-group"></i>
-           Maquina
+           El Tigre Del Norte
            <% end %>        
            </div>
         <div class="collapse navbar-collapse" id="main-nav-collapse">
@@ -40,7 +40,8 @@
         </div><!-- /.navbar-collapse -->
       </div>
     </nav>
-    <div>
+    
+    <div class="container flash-container">  
       <% flash.each do |type, msg| %>
          <%= content_tag :div, msg, class: "alert alert-#{type}" %> 
       <% end %>
