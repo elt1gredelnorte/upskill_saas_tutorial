@@ -1,0 +1,55 @@
+From 18b8a7f07a50c245e9aee7854ecdbe606bbd8bb5 Mon Sep 17 00:00:00 2001
+From: schneems <richard.schneeman+foo@gmail.com>
+Date: Tue, 24 Apr 2018 16:42:41 -0500
+Subject: [PATCH 1/2] Do not respond to http requests asking for a `file://`
+
+Based on CVE-2018-3760 when the Sprockets server is accidentally being used in production, an attacker can pass in a specifically crafted url that will allow them access to view every file on the system. If the file hit contains a compilable extension such as `.erb` then the code in that file will be executed.
+
+A Rails app will be using the Sprockets file server in production if they have accidentally configured their app to:
+
+```ruby
+config.assets.compile = true # Your app is vulnerable
+```
+
+It is highly recommended to not use the Sprockets server in production and to instead precompile assets to disk and serve them through a server such as Nginx or via the static file middleware that ships with rails `config.public_file_server.enabled = true`.
+
+This patch mitigates the issue, but explicitly disallowing any requests to any URI resources via the server.
+---
+ lib/sprockets/server.rb | 2 +-
+ test/test_server.rb     | 7 +++++++
+ 2 files changed, 8 insertions(+), 1 deletion(-)
+
+diff --git a/lib/sprockets/server.rb b/lib/sprockets/server.rb
+index e71f4138..29b5fd67 100644
+--- a/lib/sprockets/server.rb
++++ b/lib/sprockets/server.rb
+@@ -90,7 +90,7 @@ module Sprockets
+         #
+         #     http://example.org/assets/../../../etc/passwd
+         #
+-        path.include?("..") || Pathname.new(path).absolute?
++        path.include?("..") || Pathname.new(path).absolute? || path.include?("://")
+       end
+ 
+       # Returns a 403 Forbidden response tuple
+diff --git a/test/test_server.rb b/test/test_server.rb
+index 6a8a44be..29c5d4a9 100644
+--- a/test/test_server.rb
++++ b/test/test_server.rb
+@@ -230,6 +230,13 @@ class TestServer < Sprockets::TestCase
+     assert_equal 403, last_response.status
+   end
+ 
++  test "illegal access of a file asset" do
++    absolute_path = fixture_path("server/app/javascripts")
++
++    get "assets/file:%2f%2f//#{absolute_path}/foo.js"
++    assert_equal 403, last_response.status
++  end
++
+   test "add new source to tree" do
+     filename = fixture_path("server/app/javascripts/baz.js")
+ 
+-- 
+2.15.0
+
